@@ -3,68 +3,65 @@ pipeline {
     
     environment {
         TF_VAR_region = "us-east-1"
+        AWS_CREDS = credentials('aws-js-ps')
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
-                echo "Branch: ${env.BRANCH_NAME}"
+                script {
+                env.GIT_BRANCH_NAME = env.BRANCH_NAME ?: env.GIT_BRANCH
+                env.GIT_BRANCH_NAME = env.GIT_BRANCH_NAME.replaceAll('origin/', '')
+                echo "Branch detected: ${env.GIT_BRANCH_NAME}"
+            }
+
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withAWS(credentials: 'aws-js-ps', region: "us-east-1") {
-                    sh "terraform init -upgrade"
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh "terraform init"
                 }
-                echo "Terraform init completed"
+                echo "Terraform init successfully"
             }
         }
 
-        stage('Terraform Validate') {
+        stage('Plan') {
             steps {
-                sh "terraform validate"
-                echo "Code validation successful"
-            }
-        }
-
-        stage('Terraform Plan') {
-            steps {
-                withAWS(credentials: 'aws-js-ps', region: "us-east-1") {
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform plan -out=tfplan"
                 }
-                echo "Terraform plan generated"
+                echo "Terraform plan successfully"
             }
         }
 
-        stage('Approval Before Apply') {
+        stage('Approval') {
             when {
-                branch 'main'
+                    expression { env.GIT_BRANCH_NAME == 'main' }
             }
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    input message: "Approve Apply to AWS?"
-                }
+                input message: "Approve deployment to PRODUCTION?"
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Apply') {
             when {
-                branch 'main'
+                expression { env.GIT_BRANCH_NAME == 'main' }
             }
             steps {
-                withAWS(credentials: 'aws-js-ps', region: "us-east-1") {
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform apply -auto-approve tfplan"
                 }
-                echo "Terraform Apply Done!"
+                echo "Terraform apply done"
             }
         }
     }
 
     post {
-        success {
+       success {
             echo "Terraform Pipeline Execution Successful!"
         }
         failure {
