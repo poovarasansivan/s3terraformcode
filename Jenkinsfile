@@ -12,7 +12,6 @@ pipeline {
         stage('Verify AWS Region') {
             steps {
                 sh '''
-                echo "AWS Region from env:"
                 echo $AWS_REGION
                 echo $AWS_DEFAULT_REGION
                 aws configure list
