@@ -1,6 +1,6 @@
 pipeline {
     agent any
-
+    
     environment {
         TF_VAR_region = "us-east-1"
     }
@@ -11,7 +11,7 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    env.GIT_BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                    env.GIT_BRANCH_NAME = env.BRANCH_NAME ?: env.GIT_BRANCH
                     echo "Branch detected: ${env.GIT_BRANCH_NAME}"
                 }
             }
@@ -21,8 +21,8 @@ pipeline {
             steps {
                 withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform init"
-                    echo "Terraform init successfully"
                 }
+                echo "Terraform init successfully"
             }
         }
 
@@ -30,8 +30,8 @@ pipeline {
             steps {
                 withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform plan -out=tfplan"
-                    echo "Terraform plan successfully"
                 }
+                echo "Terraform plan successfully"
             }
         }
 
@@ -51,8 +51,8 @@ pipeline {
             steps {
                 withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform apply -auto-approve tfplan"
-                    echo "Terraform apply done"
                 }
+                echo "Terraform apply done"
             }
         }
     }
