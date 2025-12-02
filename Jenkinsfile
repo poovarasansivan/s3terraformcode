@@ -2,10 +2,23 @@ pipeline {
     agent any
     
     environment {
+        AWS_REGION = "us-east-1"
+        AWS_DEFAULT_REGION = "us-east-1"
         TF_VAR_region = "us-east-1"
     }
 
     stages {
+
+        stage('Verify AWS Region') {
+            steps {
+                sh '''
+                echo "AWS Region from env:"
+                echo $AWS_REGION
+                echo $AWS_DEFAULT_REGION
+                aws configure list
+                '''
+            }
+        }
 
         stage('Checkout Code') {
             steps {
