@@ -10,16 +10,16 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 checkout scm
-                sh 'git branch -a'
+                script {
+                    env.GIT_BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                    echo "Branch detected: ${env.GIT_BRANCH_NAME}"
+                }
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', 
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform init"
                     echo "Terraform init successfully"
                 }
@@ -28,10 +28,7 @@ pipeline {
 
         stage('Plan') {
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', 
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform plan -out=tfplan"
                     echo "Terraform plan successfully"
                 }
@@ -40,7 +37,7 @@ pipeline {
 
         stage('Approval') {
             when {
-                branch 'main'
+                expression { env.GIT_BRANCH_NAME == 'main' }
             }
             steps {
                 input message: "Approve deployment to PRODUCTION?"
@@ -49,13 +46,10 @@ pipeline {
 
         stage('Apply') {
             when {
-                branch 'main'
+                expression { env.GIT_BRANCH_NAME == 'main' }
             }
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', 
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh "terraform apply -auto-approve tfplan"
                     echo "Terraform apply done"
                 }
