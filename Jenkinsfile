@@ -2,8 +2,6 @@ pipeline {
     agent any
     
     environment {
-        AWS_REGION = "us-east-1"
-        AWS_DEFAULT_REGION = "us-east-1"
         TF_VAR_region = "us-east-1"
     }
 
