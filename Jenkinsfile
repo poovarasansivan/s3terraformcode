@@ -11,9 +11,11 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    env.GIT_BRANCH_NAME = env.BRANCH_NAME ?: env.GIT_BRANCH
-                    echo "Branch detected: ${env.GIT_BRANCH_NAME}"
-                }
+                env.GIT_BRANCH_NAME = env.BRANCH_NAME ?: env.GIT_BRANCH
+                env.GIT_BRANCH_NAME = env.GIT_BRANCH_NAME.replaceAll('origin/', '')
+                echo "Branch detected: ${env.GIT_BRANCH_NAME}"
+            }
+
             }
         }
 
