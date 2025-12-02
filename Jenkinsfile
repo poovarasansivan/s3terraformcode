@@ -3,28 +3,33 @@ pipeline {
 
     environment {
         TF_VAR_region = "us-east-1"
-        AWS_CREDENTIALS = credentials('aws-js-ps')
     }
 
     stages {
 
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Terraform Init') {
             steps {
-                sh '''
-                export AWS_ACCESS_KEY_ID=$AWS_CREDENTIALS_USR
-                export AWS_SECRET_ACCESS_KEY=$AWS_CREDENTIALS_PSW
-                terraform init
-                '''
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh """
+                    terraform init
+                    """
+                }
             }
         }
 
         stage('Plan') {
             steps {
-                sh '''
-                export AWS_ACCESS_KEY_ID=$AWS_CREDENTIALS_USR
-                export AWS_SECRET_ACCESS_KEY=$AWS_CREDENTIALS_PSW
-                terraform plan -out=tfplan
-                '''
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh """
+                    terraform plan -out=tfplan
+                    """
+                }
             }
         }
 
@@ -42,11 +47,11 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh '''
-                export AWS_ACCESS_KEY_ID=$AWS_CREDENTIALS_USR
-                export AWS_SECRET_ACCESS_KEY=$AWS_CREDENTIALS_PSW
-                terraform apply -auto-approve tfplan
-                '''
+                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh """
+                    terraform apply -auto-approve tfplan
+                    """
+                }
             }
         }
     }
