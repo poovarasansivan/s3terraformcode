@@ -19,6 +19,7 @@ pipeline {
                     sh """
                     terraform init
                     """
+                    echo "Terraform init successfully"
                 }
             }
         }
@@ -29,6 +30,7 @@ pipeline {
                     sh """
                     terraform plan -out=tfplan
                     """
+                    echo "Terraform plan successfully"
                 }
             }
         }
@@ -51,6 +53,7 @@ pipeline {
                     sh """
                     terraform apply -auto-approve tfplan
                     """
+                    echo "Terraform apply done"
                 }
             }
         }
@@ -58,7 +61,7 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            echo "completed"
         }
     }
 }
