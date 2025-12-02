@@ -4,7 +4,7 @@ provider "aws" {
 
 resource "aws_s3_bucket" "ps_s3_bucket" {
 
-  bucket = "ps-s3-bucket"
+  bucket = "ps-s3-bucket-ps-ps"
 
   tags = {
     Name        = "Poovarasan"
