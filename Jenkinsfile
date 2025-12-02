@@ -3,19 +3,10 @@ pipeline {
     
     environment {
         TF_VAR_region = "us-east-1"
+         AWS_CREDS = credentials('aws-js-ps')
     }
 
     stages {
-
-        stage('Verify AWS Region') {
-            steps {
-                sh '''
-                echo $AWS_REGION
-                echo $AWS_DEFAULT_REGION
-                aws configure list
-                '''
-            }
-        }
 
         stage('Checkout Code') {
             steps {
@@ -49,7 +40,7 @@ pipeline {
 
         stage('Approval') {
             when {
-                expression { env.GIT_BRANCH_NAME == 'main' }
+                    expression { env.GIT_BRANCH_NAME == 'main' }
             }
             steps {
                 input message: "Approve deployment to PRODUCTION?"
@@ -70,8 +61,11 @@ pipeline {
     }
 
     post {
-        always {
-            echo "Pipeline completed"
+       success {
+            echo "Terraform Pipeline Execution Successful!"
+        }
+        failure {
+            echo "Terraform Pipeline Failed!"
         }
     }
 }
