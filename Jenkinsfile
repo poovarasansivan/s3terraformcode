@@ -10,15 +10,17 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 checkout scm
+                sh 'git branch -a'
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh """
-                    terraform init
-                    """
+                withCredentials([aws(credentialsId: 'aws-js-ps', 
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    
+                    sh "terraform init"
                     echo "Terraform init successfully"
                 }
             }
@@ -26,10 +28,11 @@ pipeline {
 
         stage('Plan') {
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh """
-                    terraform plan -out=tfplan
-                    """
+                withCredentials([aws(credentialsId: 'aws-js-ps', 
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    
+                    sh "terraform plan -out=tfplan"
                     echo "Terraform plan successfully"
                 }
             }
@@ -49,10 +52,11 @@ pipeline {
                 branch 'main'
             }
             steps {
-                withCredentials([aws(credentialsId: 'aws-js-ps', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh """
-                    terraform apply -auto-approve tfplan
-                    """
+                withCredentials([aws(credentialsId: 'aws-js-ps', 
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    
+                    sh "terraform apply -auto-approve tfplan"
                     echo "Terraform apply done"
                 }
             }
@@ -61,7 +65,7 @@ pipeline {
 
     post {
         always {
-            echo "completed"
+            echo "Pipeline completed"
         }
     }
 }
