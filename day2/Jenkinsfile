@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Select Deployment Environment (dev/test/prod)')
+    }
+
+    stages {
+
+        stage('Install Node.js') {
+            steps {
+                echo "Checking and Installing Node.js if not present..."
+                sh """
+                    if ! command -v node >/dev/null 2>&1; then
+                        echo "NodeJS not found. Installing..."
+                        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+                        sudo apt-get install -y nodejs
+                    else
+                        echo "NodeJS already installed!"
+                    fi
+
+                    echo "Node version: \$(node -v)"
+                    echo "NPM version: \$(npm -v)"
+                """
+            }
+        }
+
+        stage('Build React App') {
+            steps {
+                echo " Creating React app and installing dependencies"
+
+                sh """
+                    npx create-react-app demo-app
+                    cd demo-app
+                    npm install
+                """
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo " Running tests..."
+
+                sh """
+                    cd demo-app
+                    npm test --watchAll=false
+                """
+            }
+        }
+
+        stage('Deploy Build') {
+            steps {
+                echo "Deploying to: ${params.ENVIRONMENT}"
+
+                sh """
+                    cd demo-app
+                    npm run build
+                    echo "Build completed. Artifacts ready:"
+                    ls -ltr build
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline successful for environment: ${params.ENVIRONMENT}"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
